@@ -90,7 +90,7 @@ where
 
     let counter_value_incremented = context.builder().build_int_add(
         counter_value,
-        is_call_successful.into_int_value(),
+        context.field_const(1),
         "create_counter_value_incremented",
     );
     context.build_call(

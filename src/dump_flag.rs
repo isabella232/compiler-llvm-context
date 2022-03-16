@@ -15,12 +15,12 @@ pub enum DumpFlag {
     EthIR,
     /// Whether to dump the EVM code.
     EVM,
+    /// Whether to dump the Vyper LLL IR code.
+    LLL,
     /// Whether to dump the LLVM IR code.
     LLVM,
     /// Whether to dump the assembly code.
     Assembly,
-    /// Whether to dump the Vyper LLL IR code.
-    LLL,
 }
 
 impl DumpFlag {
@@ -31,9 +31,9 @@ impl DumpFlag {
         yul: bool,
         ethir: bool,
         evm: bool,
+        lll: bool,
         llvm: bool,
         assembly: bool,
-        lll: bool,
     ) -> Vec<Self> {
         let mut vector = Vec::with_capacity(6);
         if yul {
@@ -45,14 +45,14 @@ impl DumpFlag {
         if evm {
             vector.push(Self::EVM);
         }
+        if lll {
+            vector.push(Self::LLL);
+        }
         if llvm {
             vector.push(Self::LLVM);
         }
         if assembly {
             vector.push(Self::Assembly);
-        }
-        if lll {
-            vector.push(Self::LLL);
         }
         vector
     }
