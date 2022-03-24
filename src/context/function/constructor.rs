@@ -4,7 +4,10 @@
 
 use std::marker::PhantomData;
 
+use inkwell::values::BasicValue;
+
 use crate::context::code_type::CodeType;
+use crate::context::function::intrinsic::Intrinsic as IntrinsicFunction;
 use crate::context::Context;
 use crate::Dependency;
 use crate::WriteLLVM;
@@ -37,6 +40,27 @@ where
             inner,
             _pd: PhantomData::default(),
         }
+    }
+
+    ///
+    /// Writes the contract constructor executed flag.
+    ///
+    fn write_is_executed_flag(context: &mut Context<D>) {
+        let storage_key_string = compiler_common::keccak256(
+            compiler_common::ABI_STORAGE_IS_CONSTRUCTOR_EXECUTED.as_bytes(),
+        );
+        let storage_key_value = context.field_const_str(storage_key_string.as_str());
+
+        let intrinsic = context.get_intrinsic_function(IntrinsicFunction::StorageStore);
+        context.build_call(
+            intrinsic,
+            &[
+                context.field_const(1).as_basic_value_enum(),
+                storage_key_value.as_basic_value_enum(),
+                context.field_const(0).as_basic_value_enum(),
+            ],
+            "is_executed_flag_store",
+        );
     }
 }
 
@@ -81,10 +105,11 @@ where
             _ => context.build_unconditional_branch(context.function().return_block),
         }
 
-        context.build_throw_block(false);
-        context.build_catch_block(false);
+        context.build_throw_block(true);
+        context.build_catch_block(true);
 
         context.set_basic_block(context.function().return_block);
+        Self::write_is_executed_flag(context);
         context.build_return(None);
 
         Ok(())

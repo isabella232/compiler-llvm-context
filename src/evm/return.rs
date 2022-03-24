@@ -134,8 +134,9 @@ fn long_return<'ctx, 'dep, D>(
 where
     D: Dependency,
 {
-    if context.function().name == compiler_common::LLVM_FUNCTION_SELECTOR
+    if context.function().name == compiler_common::LLVM_FUNCTION_ENTRY
         || context.function().name == compiler_common::LLVM_FUNCTION_CONSTRUCTOR
+        || context.function().name == compiler_common::LLVM_FUNCTION_SELECTOR
     {
         context.build_unconditional_branch(function.return_block);
     } else {

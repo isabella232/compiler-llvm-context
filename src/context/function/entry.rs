@@ -64,30 +64,6 @@ impl Entry {
             .expect("Contract storage always returns a value")
             .into_int_value()
     }
-
-    ///
-    /// Writes the contract constructor executed flag.
-    ///
-    fn write_is_executed_flag<D>(context: &mut Context<D>)
-    where
-        D: Dependency,
-    {
-        let storage_key_string = compiler_common::keccak256(
-            compiler_common::ABI_STORAGE_IS_CONSTRUCTOR_EXECUTED.as_bytes(),
-        );
-        let storage_key_value = context.field_const_str(storage_key_string.as_str());
-
-        let intrinsic = context.get_intrinsic_function(IntrinsicFunction::StorageStore);
-        context.build_call(
-            intrinsic,
-            &[
-                context.field_const(1).as_basic_value_enum(),
-                storage_key_value.as_basic_value_enum(),
-                context.field_const(0).as_basic_value_enum(),
-            ],
-            "is_executed_flag_store",
-        );
-    }
 }
 
 impl<D> WriteLLVM<D> for Entry
@@ -208,15 +184,14 @@ where
 
         context.set_basic_block(constructor_call_block);
         context.build_invoke(constructor.value, &[], "constructor_call");
-        Self::write_is_executed_flag(context);
         context.build_unconditional_branch(context.function().return_block);
 
         context.set_basic_block(selector_call_block);
         context.build_invoke(selector.value, &[], "selector_call");
         context.build_unconditional_branch(context.function().return_block);
 
-        context.build_throw_block(true);
-        context.build_catch_block(true);
+        context.build_throw_block(false);
+        context.build_catch_block(false);
 
         context.set_basic_block(context.function().return_block);
         context.build_return(None);

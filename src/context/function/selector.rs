@@ -81,8 +81,8 @@ where
             _ => context.build_unconditional_branch(context.function().return_block),
         }
 
-        context.build_throw_block(false);
-        context.build_catch_block(false);
+        context.build_throw_block(true);
+        context.build_catch_block(true);
 
         context.set_basic_block(context.function().return_block);
         context.build_return(None);
