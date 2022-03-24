@@ -15,3 +15,12 @@ pub enum CodeType {
     /// The runtime (deployed) code.
     Runtime,
 }
+
+impl std::fmt::Display for CodeType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Deploy => write!(f, "deploy"),
+            Self::Runtime => write!(f, "runtime"),
+        }
+    }
+}

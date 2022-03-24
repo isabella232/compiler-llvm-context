@@ -2,8 +2,10 @@
 //! The LLVM generator function.
 //!
 
+pub mod block;
 pub mod constructor;
 pub mod entry;
+pub mod evm_data;
 pub mod intrinsic;
 pub mod r#return;
 pub mod runtime;
@@ -11,6 +13,7 @@ pub mod selector;
 
 use std::collections::HashMap;
 
+use self::evm_data::EVMData;
 use self::r#return::Return;
 
 ///
@@ -22,6 +25,7 @@ pub struct Function<'ctx> {
     pub name: String,
     /// The LLVM value.
     pub value: inkwell::values::FunctionValue<'ctx>,
+
     /// The entry block.
     pub entry_block: inkwell::basic_block::BasicBlock<'ctx>,
     /// The throw/revert block.
@@ -30,6 +34,7 @@ pub struct Function<'ctx> {
     pub catch_block: inkwell::basic_block::BasicBlock<'ctx>,
     /// The return/leave block.
     pub return_block: inkwell::basic_block::BasicBlock<'ctx>,
+
     /// The return value entity.
     pub r#return: Option<Return<'ctx>>,
     /// The stack representation.
@@ -38,6 +43,9 @@ pub struct Function<'ctx> {
     /// but their parent block must be known in order to pass the implicit arguments thereto.
     /// Is only used by the Vyper LLL IR compiler.
     pub label_arguments: HashMap<String, Vec<String>>,
+
+    /// The EVM compiler data.
+    pub evm_data: Option<EVMData<'ctx>>,
 }
 
 impl<'ctx> Function<'ctx> {
@@ -50,13 +58,49 @@ impl<'ctx> Function<'ctx> {
     pub fn new(
         name: String,
         value: inkwell::values::FunctionValue<'ctx>,
+
         entry_block: inkwell::basic_block::BasicBlock<'ctx>,
         throw_block: inkwell::basic_block::BasicBlock<'ctx>,
         catch_block: inkwell::basic_block::BasicBlock<'ctx>,
         return_block: inkwell::basic_block::BasicBlock<'ctx>,
+
         r#return: Option<Return<'ctx>>,
     ) -> Self {
         Self {
+            name,
+            value,
+
+            entry_block,
+            throw_block,
+            catch_block,
+            return_block,
+
+            r#return,
+            stack: HashMap::with_capacity(Self::STACK_HASHMAP_INITIAL_CAPACITY),
+            label_arguments: HashMap::new(),
+
+            evm_data: None,
+        }
+    }
+
+    ///
+    /// A shortcut constructor.
+    ///
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_evm(
+        name: String,
+        value: inkwell::values::FunctionValue<'ctx>,
+
+        entry_block: inkwell::basic_block::BasicBlock<'ctx>,
+        throw_block: inkwell::basic_block::BasicBlock<'ctx>,
+        catch_block: inkwell::basic_block::BasicBlock<'ctx>,
+        return_block: inkwell::basic_block::BasicBlock<'ctx>,
+
+        r#return: Option<Return<'ctx>>,
+
+        evm_data: EVMData<'ctx>,
+    ) -> Self {
+        let mut object = Self::new(
             name,
             value,
             entry_block,
@@ -64,9 +108,9 @@ impl<'ctx> Function<'ctx> {
             catch_block,
             return_block,
             r#return,
-            stack: HashMap::with_capacity(Self::STACK_HASHMAP_INITIAL_CAPACITY),
-            label_arguments: HashMap::new(),
-        }
+        );
+        object.evm_data = Some(evm_data);
+        object
     }
 
     ///
@@ -90,12 +134,26 @@ impl<'ctx> Function<'ctx> {
     }
 
     ///
-    /// Optimizes the function using the pass manager.
+    /// Returns the EVM data reference.
     ///
-    pub fn optimize(
-        &self,
-        pass_manager: &inkwell::passes::PassManager<inkwell::values::FunctionValue<'ctx>>,
-    ) {
-        pass_manager.run_on(&self.value);
+    /// # Panics
+    /// If the EVM data has not been initialized.
+    ///
+    pub fn evm(&self) -> &EVMData<'ctx> {
+        self.evm_data
+            .as_ref()
+            .expect("The EVM data must have been initialized")
+    }
+
+    ///
+    /// Returns the EVM data mutable reference.
+    ///
+    /// # Panics
+    /// If the EVM data has not been initialized.
+    ///
+    pub fn evm_mut(&mut self) -> &mut EVMData<'ctx> {
+        self.evm_data
+            .as_mut()
+            .expect("The EVM data must have been initialized")
     }
 }

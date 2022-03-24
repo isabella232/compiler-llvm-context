@@ -5,6 +5,7 @@
 pub mod address_space;
 pub mod argument;
 pub mod code_type;
+pub mod evm_data;
 pub mod function;
 pub mod r#loop;
 pub mod optimizer;
@@ -19,6 +20,8 @@ use crate::Dependency;
 
 use self::address_space::AddressSpace;
 use self::code_type::CodeType;
+use self::evm_data::EVMData;
+use self::function::evm_data::EVMData as FunctionEVMData;
 use self::function::intrinsic::Intrinsic as IntrinsicFunction;
 use self::function::r#return::Return as FunctionReturn;
 use self::function::runtime::Runtime;
@@ -48,10 +51,10 @@ where
 
     /// The current contract code type, if known.
     pub code_type: Option<CodeType>,
-    /// The declared functions.
-    pub functions: HashMap<String, Function<'ctx>>,
     /// The runtime functions.
     pub runtime: Runtime<'ctx>,
+    /// The declared functions.
+    pub functions: HashMap<String, Function<'ctx>>,
 
     /// The project dependency manager.
     dependency_manager: Option<&'dep mut D>,
@@ -60,6 +63,9 @@ where
 
     /// The long return flag offset.
     long_return_offset: inkwell::values::IntValue<'ctx>,
+
+    /// The EVM compiler data.
+    evm_data: Option<EVMData<'ctx>>,
 }
 
 impl<'ctx, 'dep, D> Context<'ctx, 'dep, D>
@@ -100,8 +106,8 @@ where
             loop_stack: Vec::with_capacity(Self::LOOP_STACK_INITIAL_CAPACITY),
 
             code_type: None,
-            functions: HashMap::with_capacity(Self::FUNCTION_HASHMAP_INITIAL_CAPACITY),
             runtime,
+            functions: HashMap::with_capacity(Self::FUNCTION_HASHMAP_INITIAL_CAPACITY),
 
             dependency_manager,
             dump_flags,
@@ -109,7 +115,34 @@ where
             long_return_offset: llvm
                 .custom_width_int_type(compiler_common::BITLENGTH_FIELD as u32)
                 .const_zero(),
+
+            evm_data: None,
         }
+    }
+
+    ///
+    /// Initializes a new EVM LLVM context.
+    ///
+    pub fn new_evm(
+        llvm: &'ctx inkwell::context::Context,
+        machine: &inkwell::targets::TargetMachine,
+        optimization_level_middle: inkwell::OptimizationLevel,
+        optimization_level_back: inkwell::OptimizationLevel,
+        module_name: &str,
+        dependency_manager: Option<&'dep mut D>,
+        dump_flags: Vec<DumpFlag>,
+    ) -> Self {
+        let mut object = Self::new(
+            llvm,
+            machine,
+            optimization_level_middle,
+            optimization_level_back,
+            module_name,
+            dependency_manager,
+            dump_flags,
+        );
+        object.evm_data = Some(EVMData::default());
+        object
     }
 
     ///
@@ -124,6 +157,13 @@ where
     ///
     pub fn module(&self) -> &inkwell::module::Module<'ctx> {
         &self.module
+    }
+
+    ///
+    /// Checks whether the specified dump flag is set.
+    ///
+    pub fn has_dump_flag(&self, dump_flag: DumpFlag) -> bool {
+        self.dump_flags.contains(&dump_flag)
     }
 
     ///
@@ -145,12 +185,17 @@ where
     ///
     /// Should be only run when the entire module has been translated.
     ///
-    pub fn optimize(&self) {
-        for (_, function) in self.functions.iter() {
-            self.optimizer.run_on_function(function.value);
-        }
+    /// Only returns `true` if any of the passes modified the function.
+    ///
+    pub fn optimize(&self) -> bool {
+        let mut is_optimized = false;
 
-        self.optimizer.run_on_module(self.module());
+        for (_, function) in self.functions.iter() {
+            is_optimized |= self.optimizer.run_on_function(function.value);
+        }
+        is_optimized |= self.optimizer.run_on_module(self.module());
+
+        is_optimized
     }
 
     ///
@@ -233,6 +278,23 @@ where
             None,
         );
         self.functions.insert(name.to_string(), function.clone());
+    }
+
+    ///
+    /// Appends a function to the current module.
+    ///
+    pub fn add_function_evm(
+        &mut self,
+        name: &str,
+        r#type: inkwell::types::FunctionType<'ctx>,
+        linkage: Option<inkwell::module::Linkage>,
+        evm_data: FunctionEVMData<'ctx>,
+    ) {
+        self.add_function(name, r#type, linkage);
+        self.functions
+            .get_mut(name)
+            .expect("Always exists")
+            .evm_data = Some(evm_data);
     }
 
     ///
@@ -596,7 +658,7 @@ where
     ///
     /// Builds an exception catching block sequence.
     ///
-    pub fn build_catch_block(&self, is_upper_level: bool) {
+    pub fn build_catch_block(&self, handles_long_return: bool) {
         self.set_basic_block(self.function().catch_block);
 
         let landing_pad_type = self.structure_type(vec![
@@ -617,7 +679,7 @@ where
             "landing",
         );
 
-        if is_upper_level {
+        if handles_long_return {
             let no_long_return_block = self.append_basic_block("no_long_return_block");
             let long_return_flag_pointer = self.access_memory(
                 self.long_return_offset(),
@@ -885,5 +947,29 @@ where
             )
             .expect("Contract context always returns a value");
         Ok(value)
+    }
+
+    ///
+    /// Returns the EVM data reference.
+    ///
+    /// # Panics
+    /// If the EVM data has not been initialized.
+    ///
+    pub fn evm(&self) -> &EVMData<'ctx> {
+        self.evm_data
+            .as_ref()
+            .expect("The EVM data must have been initialized")
+    }
+
+    ///
+    /// Returns the EVM data mutable reference.
+    ///
+    /// # Panics
+    /// If the EVM data has not been initialized.
+    ///
+    pub fn evm_mut(&mut self) -> &mut EVMData<'ctx> {
+        self.evm_data
+            .as_mut()
+            .expect("The EVM data must have been initialized")
     }
 }

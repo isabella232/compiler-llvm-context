@@ -72,14 +72,18 @@ impl<'ctx> Optimizer<'ctx> {
     ///
     /// Runs the optimizations on `module`.
     ///
-    pub fn run_on_module(&self, module: &inkwell::module::Module<'ctx>) {
-        self.pass_manager_module.run_on(module);
+    /// Only returns `true` if any of the passes modified the module.
+    ///
+    pub fn run_on_module(&self, module: &inkwell::module::Module<'ctx>) -> bool {
+        self.pass_manager_module.run_on(module)
     }
 
     ///
     /// Runs the optimizations on `function`.
     ///
-    pub fn run_on_function(&self, function: inkwell::values::FunctionValue<'ctx>) {
-        self.pass_manager_function.run_on(&function);
+    /// Only returns `true` if any of the passes modified the function.
+    ///
+    pub fn run_on_function(&self, function: inkwell::values::FunctionValue<'ctx>) -> bool {
+        self.pass_manager_function.run_on(&function)
     }
 }

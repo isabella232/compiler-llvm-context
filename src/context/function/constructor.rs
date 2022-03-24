@@ -56,6 +56,10 @@ where
         Ok(())
     }
 
+    fn declare(&mut self, context: &mut Context<D>) -> anyhow::Result<()> {
+        self.inner.declare(context)
+    }
+
     fn into_llvm(self, context: &mut Context<D>) -> anyhow::Result<()> {
         let function = context
             .functions
