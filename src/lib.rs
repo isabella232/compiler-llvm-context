@@ -48,13 +48,6 @@ where
     D: Dependency,
 {
     ///
-    /// Makes the required preparations in the LLVM IR.
-    ///
-    fn prepare(_context: &mut Context<D>) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    ///
     /// Declares the entity in the LLVM IR.
     /// Is usually performed in order to use the item before defining it.
     ///
@@ -66,6 +59,21 @@ where
     /// Translates the entity into LLVM IR.
     ///
     fn into_llvm(self, context: &mut Context<D>) -> anyhow::Result<()>;
+}
+
+///
+/// The dummy LLVM writable entity.
+///
+#[derive(Debug, Default)]
+pub struct DummyLLVMWritable {}
+
+impl<D> WriteLLVM<D> for DummyLLVMWritable
+where
+    D: Dependency,
+{
+    fn into_llvm(self, _context: &mut Context<D>) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 ///

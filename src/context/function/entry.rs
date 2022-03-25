@@ -70,7 +70,7 @@ impl<D> WriteLLVM<D> for Entry
 where
     D: Dependency,
 {
-    fn prepare(context: &mut Context<D>) -> anyhow::Result<()> {
+    fn declare(&mut self, context: &mut Context<D>) -> anyhow::Result<()> {
         let function_type = context.function_type(0, vec![]);
         context.add_function(
             compiler_common::LLVM_FUNCTION_ENTRY,

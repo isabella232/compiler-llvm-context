@@ -45,7 +45,7 @@ where
     B: WriteLLVM<D>,
     D: Dependency,
 {
-    fn prepare(context: &mut Context<D>) -> anyhow::Result<()> {
+    fn declare(&mut self, context: &mut Context<D>) -> anyhow::Result<()> {
         let function_type = context.function_type(0, vec![]);
         context.add_function(
             compiler_common::LLVM_FUNCTION_SELECTOR,
@@ -53,10 +53,6 @@ where
             Some(inkwell::module::Linkage::Private),
         );
 
-        Ok(())
-    }
-
-    fn declare(&mut self, context: &mut Context<D>) -> anyhow::Result<()> {
         self.inner.declare(context)
     }
 
