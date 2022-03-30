@@ -141,7 +141,10 @@ where
         context.build_unconditional_branch(function.return_block);
     } else {
         let long_return_flag_pointer = context.access_memory(
-            context.long_return_offset(),
+            context.field_const(
+                (compiler_common::ABI_MEMORY_OFFSET_LONG_RETURN * compiler_common::SIZE_FIELD)
+                    as u64,
+            ),
             AddressSpace::Heap,
             "long_return_flag_pointer",
         );

@@ -61,9 +61,6 @@ where
     /// Whether to dump the specified IRs.
     dump_flags: Vec<DumpFlag>,
 
-    /// The long return flag offset.
-    long_return_offset: inkwell::values::IntValue<'ctx>,
-
     /// The EVM compiler data.
     evm_data: Option<EVMData<'ctx>>,
 }
@@ -111,10 +108,6 @@ where
 
             dependency_manager,
             dump_flags,
-
-            long_return_offset: llvm
-                .custom_width_int_type(compiler_common::BITLENGTH_FIELD as u32)
-                .const_zero(),
 
             evm_data: None,
         }
@@ -164,20 +157,6 @@ where
     ///
     pub fn has_dump_flag(&self, dump_flag: DumpFlag) -> bool {
         self.dump_flags.contains(&dump_flag)
-    }
-
-    ///
-    /// Returns the long return flag offset.
-    ///
-    pub fn long_return_offset(&self) -> inkwell::values::IntValue<'ctx> {
-        self.long_return_offset
-    }
-
-    ///
-    /// Sets the long return flag offset.
-    ///
-    pub fn set_long_return_offset(&mut self, value: inkwell::values::IntValue<'ctx>) {
-        self.long_return_offset = value;
     }
 
     ///
@@ -682,7 +661,10 @@ where
         if handles_long_return {
             let no_long_return_block = self.append_basic_block("no_long_return_block");
             let long_return_flag_pointer = self.access_memory(
-                self.long_return_offset(),
+                self.field_const(
+                    (compiler_common::ABI_MEMORY_OFFSET_LONG_RETURN * compiler_common::SIZE_FIELD)
+                        as u64,
+                ),
                 AddressSpace::Heap,
                 "long_return_flag_pointer",
             );
@@ -725,7 +707,10 @@ where
         if is_upper_level {
             let no_long_return_block = self.append_basic_block("no_long_return_block");
             let long_return_flag_pointer = self.access_memory(
-                self.long_return_offset(),
+                self.field_const(
+                    (compiler_common::ABI_MEMORY_OFFSET_LONG_RETURN * compiler_common::SIZE_FIELD)
+                        as u64,
+                ),
                 AddressSpace::Heap,
                 "long_return_flag_pointer",
             );
