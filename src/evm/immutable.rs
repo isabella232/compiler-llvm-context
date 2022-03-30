@@ -1,5 +1,5 @@
 //!
-//! Translates the contract storage operations.
+//! Translates the contract immutable operations.
 //!
 
 use inkwell::values::BasicValue;
@@ -9,48 +9,55 @@ use crate::context::Context;
 use crate::Dependency;
 
 ///
-/// Translates the contract storage load.
+/// Translates the contract immutable load.
 ///
 pub fn load<'ctx, 'dep, D>(
     context: &mut Context<'ctx, 'dep, D>,
-    arguments: [inkwell::values::BasicValueEnum<'ctx>; 1],
+    key: String,
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where
     D: Dependency,
 {
     let intrinsic = context.get_intrinsic_function(IntrinsicFunction::StorageLoad);
 
-    let position = arguments[0];
+    let position = context.field_const_str(compiler_common::keccak256(key.as_bytes()).as_str());
     let is_external_storage = context.field_const(0);
     let value = context
         .build_call(
             intrinsic,
-            &[position, is_external_storage.as_basic_value_enum()],
-            "storage_load",
+            &[
+                position.as_basic_value_enum(),
+                is_external_storage.as_basic_value_enum(),
+            ],
+            "immutable_load",
         )
         .expect("Contract storage always returns a value");
     Ok(Some(value))
 }
 
 ///
-/// Translates the contract storage store.
+/// Translates the contract immutable store.
 ///
 pub fn store<'ctx, 'dep, D>(
     context: &mut Context<'ctx, 'dep, D>,
-    arguments: [inkwell::values::BasicValueEnum<'ctx>; 2],
+    key: String,
+    value: inkwell::values::IntValue<'ctx>,
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where
     D: Dependency,
 {
     let intrinsic = context.get_intrinsic_function(IntrinsicFunction::StorageStore);
 
-    let position = arguments[0];
-    let value = arguments[1];
+    let position = context.field_const_str(compiler_common::keccak256(key.as_bytes()).as_str());
     let is_external_storage = context.field_const(0);
     context.build_call(
         intrinsic,
-        &[value, position, is_external_storage.as_basic_value_enum()],
-        "storage_store",
+        &[
+            value.as_basic_value_enum(),
+            position.as_basic_value_enum(),
+            is_external_storage.as_basic_value_enum(),
+        ],
+        "immutable_store",
     );
     Ok(None)
 }

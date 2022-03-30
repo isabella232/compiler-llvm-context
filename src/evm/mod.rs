@@ -11,6 +11,7 @@ pub mod contract;
 pub mod create;
 pub mod event;
 pub mod hash;
+pub mod immutable;
 pub mod math;
 pub mod memory;
 pub mod r#return;

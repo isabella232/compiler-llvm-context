@@ -77,6 +77,7 @@ where
     ///
     /// Initializes a new LLVM context.
     ///
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         llvm: &'ctx inkwell::context::Context,
         machine: &inkwell::targets::TargetMachine,
@@ -116,6 +117,7 @@ where
     ///
     /// Initializes a new EVM LLVM context.
     ///
+    #[allow(clippy::too_many_arguments)]
     pub fn new_evm(
         llvm: &'ctx inkwell::context::Context,
         machine: &inkwell::targets::TargetMachine,
@@ -124,6 +126,7 @@ where
         module_name: &str,
         dependency_manager: Option<&'dep mut D>,
         dump_flags: Vec<DumpFlag>,
+        evm_data: EVMData<'ctx>,
     ) -> Self {
         let mut object = Self::new(
             llvm,
@@ -134,7 +137,7 @@ where
             dependency_manager,
             dump_flags,
         );
-        object.evm_data = Some(EVMData::default());
+        object.evm_data = Some(evm_data);
         object
     }
 

@@ -10,6 +10,7 @@ description = "The zkEVM Solidity compiler"
 
 [dependencies]
 anyhow = "1.0"
+semver = "1.0"
 
 compiler-common = { git = "ssh://git@github.com/matter-labs/compiler-common" }
 
