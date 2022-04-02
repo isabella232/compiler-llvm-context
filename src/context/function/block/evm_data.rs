@@ -7,15 +7,15 @@
 ///
 #[derive(Debug, Clone)]
 pub struct EVMData {
-    /// The stack pattern.
-    pub stack_pattern: String,
+    /// The initial stack state hash.
+    pub stack_hash: md5::Digest,
 }
 
 impl EVMData {
     ///
     /// A shortcut constructor.
     ///
-    pub fn new(stack_pattern: String) -> Self {
-        Self { stack_pattern }
+    pub fn new(stack_hash: md5::Digest) -> Self {
+        Self { stack_hash }
     }
 }

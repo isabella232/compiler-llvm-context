@@ -41,15 +41,11 @@ impl<'ctx> EVMData<'ctx> {
     }
 
     ///
-    /// Returns the block with the specified initial stack pattern.
+    /// Returns the block with the specified tag and initial stack pattern.
     ///
     /// If there is only one block, it is returned unconditionally.
     ///
-    pub fn block_by_stack_pattern(
-        &self,
-        tag: usize,
-        stack_pattern: &str,
-    ) -> anyhow::Result<Block<'ctx>> {
+    pub fn find_block(&self, tag: usize, stack_hash: &md5::Digest) -> anyhow::Result<Block<'ctx>> {
         if self
             .blocks
             .get(&tag)
@@ -70,7 +66,7 @@ impl<'ctx> EVMData<'ctx> {
             .get(&tag)
             .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", tag))?
             .iter()
-            .find(|block| block.evm().stack_pattern.as_str() == stack_pattern)
+            .find(|block| &block.evm().stack_hash == stack_hash)
             .cloned()
             .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", tag))
     }
