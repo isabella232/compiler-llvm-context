@@ -2,6 +2,8 @@
 //! The LLVM generator EVM data.
 //!
 
+use crate::context::argument::Argument;
+
 ///
 /// The LLVM generator EVM data.
 ///
@@ -11,7 +13,7 @@ pub struct EVMData<'ctx> {
     /// Some instruction behave differenly depending on the version.
     pub version: semver::Version,
     /// The static stack allocated for the current function.
-    pub stack: Vec<inkwell::values::PointerValue<'ctx>>,
+    pub stack: Vec<Argument<'ctx>>,
 }
 
 impl<'ctx> EVMData<'ctx> {
