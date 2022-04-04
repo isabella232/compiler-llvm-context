@@ -5,7 +5,6 @@
 use inkwell::values::BasicValue;
 
 use crate::context::address_space::AddressSpace;
-use crate::context::argument::Argument;
 use crate::context::function::intrinsic::Intrinsic as IntrinsicFunction;
 use crate::context::Context;
 use crate::Dependency;
@@ -110,6 +109,59 @@ where
     );
 
     Ok(Some(address.as_basic_value_enum()))
+}
+
+///
+/// Translates the contract hash instruction, which is actually used to set the hash of the contract
+/// being created, or other related auxiliary data.
+///
+/// `dataoffset` in Yul, `PUSH [$]` in legacy assembly.
+///
+pub fn contract_hash<'ctx, 'dep, D>(
+    context: &mut Context<'ctx, 'dep, D>,
+    identifier: String,
+) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
+where
+    D: Dependency,
+{
+    let parent = context.module().get_name().to_str().expect("Always valid");
+
+    if identifier.ends_with("_deployed") || identifier.as_str() == parent {
+        return Ok(Some(context.field_const(0).as_basic_value_enum()));
+    }
+
+    let hash_value = context
+        .compile_dependency(identifier.as_str())
+        .map(|hash| context.field_const_str(hash.as_str()))
+        .map(inkwell::values::BasicValueEnum::IntValue)?;
+
+    Ok(Some(hash_value))
+}
+
+///
+/// Translates the contract hash size instruction, which is actually used to set the hash of the
+/// contract being created, or other related auxiliary data.
+///
+/// `datasize` in Yul, `PUSH #[$]` in legacy assembly.
+///
+pub fn contract_hash_size<'ctx, 'dep, D>(
+    context: &mut Context<'ctx, 'dep, D>,
+    identifier: String,
+) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
+where
+    D: Dependency,
+{
+    let parent = context.module().get_name().to_str().expect("Always valid");
+
+    if identifier.ends_with("_deployed") || identifier.as_str() == parent {
+        return Ok(Some(context.field_const(0).as_basic_value_enum()));
+    }
+
+    Ok(Some(
+        context
+            .field_const(compiler_common::SIZE_FIELD as u64)
+            .as_basic_value_enum(),
+    ))
 }
 
 ///
@@ -347,84 +399,4 @@ where
         .expect("IntrinsicFunction always returns a flag");
 
     Ok(is_call_successful)
-}
-
-///
-/// Translates the `datasize` instruction, which is actually used to set the hash of the contract
-/// being created, or other related auxiliary data.
-///
-pub fn datasize<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
-    mut arguments: [Argument<'ctx>; 1],
-) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
-where
-    D: Dependency,
-{
-    let identifier = arguments[0]
-        .original
-        .take()
-        .ok_or_else(|| anyhow::anyhow!("`datasize` object identifier is missing"))?;
-
-    let parent = context.module().get_name().to_str().expect("Always valid");
-
-    if identifier.ends_with("_deployed") || identifier.as_str() == parent {
-        return Ok(Some(context.field_const(0).as_basic_value_enum()));
-    }
-
-    Ok(Some(
-        context
-            .field_const(compiler_common::SIZE_FIELD as u64)
-            .as_basic_value_enum(),
-    ))
-}
-
-///
-/// Translates the `dataoffset` instruction, which is actually used to set the hash of the contract
-/// being created, or other related auxiliary data.
-///
-pub fn dataoffset<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
-    mut arguments: [Argument<'ctx>; 1],
-) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
-where
-    D: Dependency,
-{
-    let identifier = arguments[0]
-        .original
-        .take()
-        .ok_or_else(|| anyhow::anyhow!("`dataoffset` object identifier is missing"))?;
-
-    let parent = context.module().get_name().to_str().expect("Always valid");
-
-    if identifier.ends_with("_deployed") || identifier.as_str() == parent {
-        return Ok(Some(context.field_const(0).as_basic_value_enum()));
-    }
-
-    let hash_value = context
-        .compile_dependency(identifier.as_str())
-        .map(|hash| context.field_const_str(hash.as_str()))
-        .map(inkwell::values::BasicValueEnum::IntValue)?;
-
-    Ok(Some(hash_value))
-}
-
-///
-/// Translates the `datacopy` instruction, which is actually used to set the hash of the contract
-/// being created, or other related auxiliary data.
-///
-pub fn datacopy<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
-    arguments: [inkwell::values::BasicValueEnum<'ctx>; 3],
-) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
-where
-    D: Dependency,
-{
-    let pointer = context.access_memory(
-        arguments[0].into_int_value(),
-        AddressSpace::Heap,
-        "datacopy_pointer",
-    );
-    context.build_store(pointer, arguments[1]);
-
-    Ok(None)
 }
