@@ -841,7 +841,10 @@ where
     ///
     pub fn field_const_str_hex(&self, value: &str) -> inkwell::values::IntValue<'ctx> {
         self.field_type()
-            .const_int_from_string(value, inkwell::types::StringRadix::Hexadecimal)
+            .const_int_from_string(
+                value.strip_prefix("0x").unwrap_or(value),
+                inkwell::types::StringRadix::Hexadecimal,
+            )
             .unwrap_or_else(|| panic!("Invalid string constant `{}`", value))
     }
 
