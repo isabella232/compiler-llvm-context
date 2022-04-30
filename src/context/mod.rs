@@ -77,12 +77,10 @@ where
     ///
     /// Initializes a new LLVM context.
     ///
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         llvm: &'ctx inkwell::context::Context,
         machine: &inkwell::targets::TargetMachine,
-        optimization_level_middle: inkwell::OptimizationLevel,
-        optimization_level_back: inkwell::OptimizationLevel,
+        mut optimizer: Optimizer<'ctx>,
         module_name: &str,
         dependency_manager: Option<&'dep mut D>,
         dump_flags: Vec<DumpFlag>,
@@ -91,7 +89,7 @@ where
         module.set_triple(&machine.get_triple());
         module.set_data_layout(&machine.get_target_data().get_data_layout());
 
-        let optimizer = Optimizer::new(&module, optimization_level_middle, optimization_level_back);
+        optimizer.set_module(&module);
 
         let runtime = Runtime::new(llvm, &module);
 
@@ -117,12 +115,10 @@ where
     ///
     /// Initializes a new EVM LLVM context.
     ///
-    #[allow(clippy::too_many_arguments)]
     pub fn new_evm(
         llvm: &'ctx inkwell::context::Context,
         machine: &inkwell::targets::TargetMachine,
-        optimization_level_middle: inkwell::OptimizationLevel,
-        optimization_level_back: inkwell::OptimizationLevel,
+        optimizer: Optimizer<'ctx>,
         module_name: &str,
         dependency_manager: Option<&'dep mut D>,
         dump_flags: Vec<DumpFlag>,
@@ -131,8 +127,7 @@ where
         let mut object = Self::new(
             llvm,
             machine,
-            optimization_level_middle,
-            optimization_level_back,
+            optimizer,
             module_name,
             dependency_manager,
             dump_flags,
@@ -203,8 +198,8 @@ where
                 manager.compile(
                     name,
                     self.module.get_name().to_str().expect("Always valid"),
-                    self.optimizer.level_middle(),
-                    self.optimizer.level_back(),
+                    self.optimizer.level_middle_end(),
+                    self.optimizer.level_back_end(),
                     self.dump_flags.clone(),
                 )
             })
