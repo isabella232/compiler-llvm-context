@@ -11,6 +11,7 @@ pub use self::context::argument::Argument;
 pub use self::context::code_type::CodeType;
 pub use self::context::evm_data::EVMData as ContextEVMData;
 pub use self::context::function::block::evm_data::EVMData as FunctionBlockEVMData;
+pub use self::context::function::block::key::Key as FunctionBlockKey;
 pub use self::context::function::block::Block as FunctionBlock;
 pub use self::context::function::constructor::Constructor as ConstructorFunction;
 pub use self::context::function::entry::Entry as EntryFunction;

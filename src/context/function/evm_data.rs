@@ -4,6 +4,7 @@
 
 use std::collections::BTreeMap;
 
+use crate::context::function::block::key::Key as BlockKey;
 use crate::context::function::block::Block;
 
 ///
@@ -13,7 +14,7 @@ use crate::context::function::block::Block;
 pub struct EVMData<'ctx> {
     /// The ordinary blocks with numeric tags.
     /// Is only used by the Solidity EVM compiler.
-    pub blocks: BTreeMap<usize, Vec<Block<'ctx>>>,
+    pub blocks: BTreeMap<BlockKey, Vec<Block<'ctx>>>,
     /// The function stack size.
     pub stack_size: usize,
 }
@@ -32,11 +33,11 @@ impl<'ctx> EVMData<'ctx> {
     ///
     /// Inserts a function block.
     ///
-    pub fn insert_block(&mut self, tag: usize, block: Block<'ctx>) {
-        if let Some(blocks) = self.blocks.get_mut(&tag) {
+    pub fn insert_block(&mut self, key: BlockKey, block: Block<'ctx>) {
+        if let Some(blocks) = self.blocks.get_mut(&key) {
             blocks.push(block);
         } else {
-            self.blocks.insert(tag, vec![block]);
+            self.blocks.insert(key, vec![block]);
         }
     }
 
@@ -45,29 +46,33 @@ impl<'ctx> EVMData<'ctx> {
     ///
     /// If there is only one block, it is returned unconditionally.
     ///
-    pub fn find_block(&self, tag: usize, stack_hash: &md5::Digest) -> anyhow::Result<Block<'ctx>> {
+    pub fn find_block(
+        &self,
+        key: &BlockKey,
+        stack_hash: &md5::Digest,
+    ) -> anyhow::Result<Block<'ctx>> {
         if self
             .blocks
-            .get(&tag)
-            .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", tag))?
+            .get(key)
+            .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", key))?
             .len()
             == 1
         {
             return self
                 .blocks
-                .get(&tag)
-                .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", tag))?
+                .get(key)
+                .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", key))?
                 .first()
                 .cloned()
-                .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", tag));
+                .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", key));
         }
 
         self.blocks
-            .get(&tag)
-            .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", tag))?
+            .get(key)
+            .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", key))?
             .iter()
             .find(|block| &block.evm().stack_hash == stack_hash)
             .cloned()
-            .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", tag))
+            .ok_or_else(|| anyhow::anyhow!("Undeclared function block {}", key))
     }
 }
