@@ -22,8 +22,8 @@ impl Entry {
     ///
     /// Returns the constructor call flag.
     ///
-    fn is_constructor_call<'ctx, 'dep, D>(
-        context: &mut Context<'ctx, 'dep, D>,
+    fn is_constructor_call<'ctx, D>(
+        context: &mut Context<'ctx, D>,
     ) -> inkwell::values::IntValue<'ctx>
     where
         D: Dependency,
@@ -40,8 +40,8 @@ impl Entry {
     ///
     /// Returns the constructor having executed flag.
     ///
-    fn read_is_executed_flag<'ctx, 'dep, D>(
-        context: &mut Context<'ctx, 'dep, D>,
+    fn read_is_executed_flag<'ctx, D>(
+        context: &mut Context<'ctx, D>,
     ) -> inkwell::values::IntValue<'ctx>
     where
         D: Dependency,

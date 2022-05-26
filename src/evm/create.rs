@@ -12,8 +12,8 @@ use crate::Dependency;
 ///
 /// Translates the contract `create` instruction.
 ///
-pub fn create<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn create<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     value: inkwell::values::IntValue<'ctx>,
     input_offset: inkwell::values::IntValue<'ctx>,
     input_size: inkwell::values::IntValue<'ctx>,
@@ -27,8 +27,8 @@ where
 ///
 /// Translates the contract `create2` instruction.
 ///
-pub fn create2<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn create2<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     value: inkwell::values::IntValue<'ctx>,
     input_offset: inkwell::values::IntValue<'ctx>,
     input_size: inkwell::values::IntValue<'ctx>,
@@ -117,8 +117,8 @@ where
 ///
 /// `dataoffset` in Yul, `PUSH [$]` in legacy assembly.
 ///
-pub fn contract_hash<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn contract_hash<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     identifier: String,
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where
@@ -144,8 +144,8 @@ where
 ///
 /// `datasize` in Yul, `PUSH #[$]` in legacy assembly.
 ///
-pub fn contract_hash_size<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn contract_hash_size<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     identifier: String,
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where
@@ -168,8 +168,8 @@ where
 /// Gets the `keccak256` of the salt, which consists of the constructor arguments, nonce, and the
 /// salt provided by Yul.
 ///
-fn call_keccak256_salt<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+fn call_keccak256_salt<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     constructor_input_offset: inkwell::values::IntValue<'ctx>,
     constructor_input_size: inkwell::values::IntValue<'ctx>,
     counter_value: inkwell::values::IntValue<'ctx>,
@@ -272,8 +272,8 @@ where
 ///
 /// Calls the `create` precompile, which returns the newly deployed contract address.
 ///
-fn call_address_precompile<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+fn call_address_precompile<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     hash: inkwell::values::IntValue<'ctx>,
     salt: inkwell::values::IntValue<'ctx>,
 ) -> anyhow::Result<inkwell::values::BasicValueEnum<'ctx>>
@@ -336,8 +336,8 @@ where
 ///
 /// Calls the constructor of the newly deployed contract.
 ///
-fn call_constructor<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+fn call_constructor<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     address: inkwell::values::IntValue<'ctx>,
     constructor_input_offset: inkwell::values::IntValue<'ctx>,
     constructor_input_size: inkwell::values::IntValue<'ctx>,

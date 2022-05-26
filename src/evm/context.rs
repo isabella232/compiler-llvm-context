@@ -11,8 +11,8 @@ use crate::Dependency;
 ///
 /// Translates the contract context getter calls.
 ///
-pub fn get<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn get<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     context_value: compiler_common::ContextValue,
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where

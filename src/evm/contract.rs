@@ -14,8 +14,8 @@ use crate::Dependency;
 /// Translates a contract call.
 ///
 #[allow(clippy::too_many_arguments)]
-pub fn call<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn call<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     call_type: IntrinsicFunction,
     address: inkwell::values::IntValue<'ctx>,
     value: Option<inkwell::values::IntValue<'ctx>>,
@@ -73,8 +73,8 @@ where
 ///
 /// Translates a linker symbol.
 ///
-pub fn linker_symbol<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn linker_symbol<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     mut arguments: [Argument<'ctx>; 1],
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where
@@ -95,8 +95,8 @@ where
 ///
 /// Generates an ordinary contract call
 ///
-fn call_ordinary<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+fn call_ordinary<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     call_type: IntrinsicFunction,
     address: inkwell::values::IntValue<'ctx>,
     input_offset: inkwell::values::IntValue<'ctx>,
@@ -181,8 +181,8 @@ where
 ///
 /// Generates a memcopy call for the Identity precompile.
 ///
-fn call_identity<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+fn call_identity<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     destination: inkwell::values::IntValue<'ctx>,
     source: inkwell::values::IntValue<'ctx>,
     size: inkwell::values::IntValue<'ctx>,

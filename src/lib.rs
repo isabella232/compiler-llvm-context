@@ -41,6 +41,9 @@ pub use self::evm::r#return;
 pub use self::evm::return_data;
 pub use self::evm::storage;
 
+use std::sync::Arc;
+use std::sync::RwLock;
+
 ///
 /// Implemented by items which are translated into LLVM IR.
 ///
@@ -86,7 +89,7 @@ pub trait Dependency {
     /// Compiles a project dependency.
     ///
     fn compile(
-        &mut self,
+        project: Arc<RwLock<Self>>,
         name: &str,
         parent_name: &str,
         optimization_level_middle: inkwell::OptimizationLevel,
@@ -97,5 +100,5 @@ pub trait Dependency {
     ///
     /// Resolves a library address.
     ///
-    fn resolve_library(&self, path: &str) -> anyhow::Result<String>;
+    fn resolve_library(project: Arc<RwLock<Self>>, path: &str) -> anyhow::Result<String>;
 }

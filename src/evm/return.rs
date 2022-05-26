@@ -11,8 +11,8 @@ use crate::Dependency;
 ///
 /// Translates the normal return.
 ///
-pub fn r#return<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn r#return<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     arguments: [inkwell::values::BasicValueEnum<'ctx>; 2],
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where
@@ -52,8 +52,8 @@ where
 ///
 /// Translates the revert.
 ///
-pub fn revert<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn revert<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     arguments: [inkwell::values::BasicValueEnum<'ctx>; 2],
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where
@@ -93,8 +93,8 @@ where
 ///
 /// Translates the stop.
 ///
-pub fn stop<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn stop<'ctx, D>(
+    context: &mut Context<'ctx, D>,
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where
     D: Dependency,
@@ -110,8 +110,8 @@ where
 ///
 /// Translates the invalid.
 ///
-pub fn invalid<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+pub fn invalid<'ctx, D>(
+    context: &mut Context<'ctx, D>,
 ) -> anyhow::Result<Option<inkwell::values::BasicValueEnum<'ctx>>>
 where
     D: Dependency,
@@ -127,8 +127,8 @@ where
 ///
 /// Generates the long return sequence.
 ///
-fn long_return<'ctx, 'dep, D>(
-    context: &mut Context<'ctx, 'dep, D>,
+fn long_return<'ctx, D>(
+    context: &mut Context<'ctx, D>,
     function: Function<'ctx>,
 ) -> anyhow::Result<()>
 where

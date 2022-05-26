@@ -11,6 +11,8 @@ pub mod r#loop;
 pub mod optimizer;
 
 use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::RwLock;
 
 use inkwell::types::BasicType;
 use inkwell::values::BasicValue;
@@ -32,7 +34,7 @@ use self::r#loop::Loop;
 ///
 /// The LLVM generator context.
 ///
-pub struct Context<'ctx, 'dep, D>
+pub struct Context<'ctx, D>
 where
     D: Dependency,
 {
@@ -57,7 +59,7 @@ where
     pub functions: HashMap<String, Function<'ctx>>,
 
     /// The project dependency manager.
-    dependency_manager: Option<&'dep mut D>,
+    dependency_manager: Option<Arc<RwLock<D>>>,
     /// Whether to dump the specified IRs.
     dump_flags: Vec<DumpFlag>,
 
@@ -65,7 +67,7 @@ where
     evm_data: Option<EVMData<'ctx>>,
 }
 
-impl<'ctx, 'dep, D> Context<'ctx, 'dep, D>
+impl<'ctx, D> Context<'ctx, D>
 where
     D: Dependency,
 {
@@ -84,7 +86,7 @@ where
         optimization_level_middle: inkwell::OptimizationLevel,
         optimization_level_back: inkwell::OptimizationLevel,
         module_name: &str,
-        dependency_manager: Option<&'dep mut D>,
+        dependency_manager: Option<Arc<RwLock<D>>>,
         dump_flags: Vec<DumpFlag>,
     ) -> Self {
         let module = llvm.create_module(module_name);
@@ -124,7 +126,7 @@ where
         optimization_level_middle: inkwell::OptimizationLevel,
         optimization_level_back: inkwell::OptimizationLevel,
         module_name: &str,
-        dependency_manager: Option<&'dep mut D>,
+        dependency_manager: Option<Arc<RwLock<D>>>,
         dump_flags: Vec<DumpFlag>,
         evm_data: EVMData<'ctx>,
     ) -> Self {
@@ -197,10 +199,11 @@ where
     ///
     pub fn compile_dependency(&mut self, name: &str) -> anyhow::Result<String> {
         self.dependency_manager
-            .as_mut()
+            .to_owned()
             .ok_or_else(|| anyhow::anyhow!("The dependency manager is unset"))
             .and_then(|manager| {
-                manager.compile(
+                Dependency::compile(
+                    manager,
                     name,
                     self.module.get_name().to_str().expect("Always valid"),
                     self.optimizer.level_middle(),
@@ -215,10 +218,10 @@ where
     ///
     pub fn resolve_library(&self, path: &str) -> anyhow::Result<inkwell::values::IntValue<'ctx>> {
         self.dependency_manager
-            .as_ref()
+            .to_owned()
             .ok_or_else(|| anyhow::anyhow!("The dependency manager is unset"))
             .and_then(|manager| {
-                let address = manager.resolve_library(path)?;
+                let address = Dependency::resolve_library(manager, path)?;
                 Ok(self.field_const_str(address.as_str()))
             })
     }
